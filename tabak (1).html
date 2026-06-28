@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#534ab7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Табак">
+<title>Табак — учёт</title>
+<style>
+  :root{
+    --purple:#534ab7; --purple-soft:#ece9ff;
+    --green:#1d9e75; --green-soft:#e2f5ee;
+    --pink:#d4537e; --amber:#854f0b; --amber-soft:#fbeede;
+    --bg:#f4f4f7; --card:#ffffff; --line:#ececf1;
+    --txt:#1b1b24; --muted:#7a7a89;
+    --radius:18px; --shadow:0 4px 18px rgba(30,25,70,.07);
+    --safe-t:env(safe-area-inset-top,0px);
+    --safe-b:env(safe-area-inset-bottom,0px);
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%}
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg); color:var(--txt);
+    overscroll-behavior-y:none;
+    -webkit-user-select:none; user-select:none;
+  }
+  #app{max-width:560px;margin:0 auto;min-height:100%;display:flex;flex-direction:column}
+
+  /* Header */
+  header{
+    padding:calc(var(--safe-t) + 14px) 18px 12px;
+    background:var(--card); border-bottom:1px solid var(--line);
+    position:sticky; top:0; z-index:5;
+  }
+  header h1{margin:0;font-size:21px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:9px}
+  header h1 .dot{width:26px;height:26px;border-radius:8px;background:linear-gradient(135deg,#6a5fe0,#534ab7);display:inline-block}
+  header .sub{margin-top:3px;font-size:12.5px;color:var(--muted)}
+
+  main{flex:1;padding:16px 16px 92px;overflow-y:auto}
+
+  /* Bottom nav */
+  nav{
+    position:fixed;left:0;right:0;bottom:0;z-index:6;
+    max-width:560px;margin:0 auto;
+    background:rgba(255,255,255,.94);backdrop-filter:blur(10px);
+    border-top:1px solid var(--line);
+    display:flex;padding:8px 8px calc(8px + var(--safe-b));
+  }
+  nav button{
+    flex:1;background:none;border:0;padding:6px 0 4px;border-radius:14px;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;
+  }
+  nav button svg{width:23px;height:23px;stroke-width:2}
+  nav button.on{color:var(--purple)}
+  nav button.on svg{stroke-width:2.4}
+
+  /* Generic */
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .sec-title{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin:4px 2px 10px}
+  .empty{text-align:center;color:var(--muted);padding:34px 18px;font-size:14.5px;line-height:1.55}
+  .empty svg{width:40px;height:40px;stroke-width:1.6;color:#c7c7d2;margin-bottom:10px}
+  .price{font-variant-numeric:tabular-nums}
+
+  /* Take list */
+  .item-card{display:flex;align-items:center;gap:13px;padding:14px;margin-bottom:10px;cursor:pointer}
+  .item-card:active{transform:scale(.99)}
+  .item-ic{width:42px;height:42px;border-radius:12px;background:var(--purple-soft);color:var(--purple);
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .item-ic svg{width:22px;height:22px;stroke-width:2}
+  .item-main{flex:1;min-width:0}
+  .item-name{font-weight:700;font-size:15.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .item-sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .item-add{width:34px;height:34px;border-radius:11px;background:var(--green);color:#fff;border:0;
+    display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .item-add svg{width:20px;height:20px;stroke-width:2.5}
+
+  /* Month total */
+  .total{padding:18px;margin-bottom:14px;background:linear-gradient(135deg,#1fae80,#178a64);color:#fff;border:0}
+  .total .lbl{font-size:13px;opacity:.9;font-weight:600}
+  .total .big{font-size:34px;font-weight:800;letter-spacing:-1px;margin-top:2px}
+  .total .cnt{font-size:13px;opacity:.92;margin-top:2px}
+  .monthbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+  .monthbar .m{font-size:16px;font-weight:800}
+  .monthbar button{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;color:var(--txt)}
+  .monthbar button svg{width:20px;height:20px;stroke-width:2.4}
+
+  .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;border:0;border-radius:14px;
+    padding:14px;font-size:15px;font-weight:700;cursor:pointer}
+  .btn svg{width:19px;height:19px;stroke-width:2.2}
+  .btn-primary{background:var(--purple);color:#fff}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-ghost{background:var(--card);color:var(--txt);border:1px solid var(--line)}
+  .btn:disabled{opacity:.5}
+
+  /* Entry rows */
+  .entry{display:flex;align-items:center;gap:12px;padding:11px 12px;border-bottom:1px solid var(--line)}
+  .entry:last-child{border-bottom:0}
+  .thumb{width:46px;height:46px;border-radius:11px;flex-shrink:0;object-fit:cover;background:#f0f0f3;border:1px solid var(--line)}
+  .thumb.miss{display:flex;align-items:center;justify-content:center;background:var(--amber-soft);color:var(--amber)}
+  .thumb.miss svg{width:20px;height:20px;stroke-width:2}
+  .entry .e-main{flex:1;min-width:0}
+  .entry .e-name{font-weight:650;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .entry .e-sub{font-size:12.5px;color:var(--muted);margin-top:2px}
+  .entry .e-price{font-weight:700;font-size:14.5px}
+  .icon-btn{width:32px;height:32px;border-radius:10px;border:1px solid var(--line);background:var(--card);
+    display:flex;align-items:center;justify-content:center;color:var(--muted);flex-shrink:0}
+  .icon-btn svg{width:17px;height:17px;stroke-width:2}
+
+  /* Catalog form */
+  .field{display:block;width:100%;border:1px solid var(--line);border-radius:13px;padding:13px 14px;font-size:15px;
+    background:var(--card);color:var(--txt);margin-bottom:10px;-webkit-user-select:text;user-select:text}
+  .field:focus{outline:none;border-color:var(--purple)}
+  .row2{display:flex;gap:10px}
+  .row2 .field{margin-bottom:0}
+  .row2 .field.name{flex:1}
+  .row2 .field.pr{width:118px}
+
+  /* Sheet / modal */
+  .scrim{position:fixed;inset:0;background:rgba(20,18,40,.45);z-index:20;display:none;align-items:flex-end;justify-content:center}
+  .scrim.show{display:flex}
+  .sheet{background:var(--bg);width:100%;max-width:560px;border-radius:24px 24px 0 0;padding:18px 18px calc(20px + var(--safe-b));
+    animation:up .22s ease}
+  @keyframes up{from{transform:translateY(40px);opacity:.6}to{transform:none;opacity:1}}
+  .sheet h2{margin:2px 0 4px;font-size:18px;font-weight:800}
+  .sheet .price-tag{color:var(--green);font-weight:800;font-size:16px}
+  .znak-slot{margin:14px 0;border:1.5px dashed #cfcdde;border-radius:16px;background:var(--card);
+    min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;
+    color:var(--muted);font-size:14px;font-weight:600;text-align:center;padding:16px;cursor:pointer;overflow:hidden;position:relative}
+  .znak-slot svg{width:32px;height:32px;stroke-width:1.8;color:var(--purple)}
+  .znak-slot img{width:100%;height:100%;max-height:230px;object-fit:contain;border-radius:12px}
+  .znak-slot .retake{position:absolute;right:10px;bottom:10px;background:rgba(0,0,0,.62);color:#fff;
+    padding:7px 12px;border-radius:10px;font-size:12.5px;display:flex;align-items:center;gap:5px}
+  .znak-slot .retake svg{width:14px;height:14px;color:#fff}
+  .sheet-actions{display:flex;gap:10px;margin-top:8px}
+  .sheet-actions .btn{flex:1}
+
+  /* Live camera */
+  .cam{position:fixed;inset:0;background:#000;z-index:45;display:none;flex-direction:column}
+  .cam.show{display:flex}
+  .cam-top{padding:calc(var(--safe-t) + 12px) 16px 10px;color:#fff;font-size:14px;font-weight:600;
+    display:flex;align-items:center;justify-content:center;position:relative}
+  .cam-torch{position:absolute;right:12px;top:calc(var(--safe-t) + 6px);width:40px;height:40px;border-radius:50%;
+    border:0;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center}
+  .cam-torch.on{background:#ffd24a;color:#1b1b24}
+  .cam-torch svg{width:20px;height:20px;stroke-width:2}
+  .cam-stage{flex:1;position:relative;overflow:hidden;background:#000}
+  #camVideo{width:100%;height:100%;object-fit:cover}
+  .cam-guide{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:64vw;height:64vw;max-width:330px;max-height:330px;border:2px solid rgba(255,255,255,.92);
+    border-radius:18px;box-shadow:0 0 0 9999px rgba(0,0,0,.30)}
+  .cam-bottom{padding:18px 26px calc(20px + var(--safe-b));display:flex;align-items:center;justify-content:space-between;background:#000}
+  .shutter{width:74px;height:74px;border-radius:50%;border:5px solid #fff;background:#fff}
+  .shutter:active{transform:scale(.93)}
+  .cam-side{background:none;border:0;color:#fff;font-size:11.5px;font-weight:600;
+    display:flex;flex-direction:column;align-items:center;gap:4px;width:62px}
+  .cam-side svg{width:24px;height:24px;stroke-width:2}
+  .cam-fallback{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;
+    gap:13px;padding:30px;text-align:center;background:#000}
+  .cam.fb .cam-fallback{display:flex}
+  .cam.fb .cam-guide{display:none}
+  .cam.fb #camShot{visibility:hidden}
+  .cam-fallback svg{width:44px;height:44px;stroke-width:1.6;color:#8a8a96}
+  .cam-fallback p{margin:0 0 4px;font-size:14.5px;line-height:1.5;color:#d6d6de;max-width:300px}
+  .cam-fallback .fbb{width:100%;max-width:300px;padding:14px;border-radius:14px;border:0;font-size:15px;font-weight:700}
+  .cam-fallback .fbb.cam-btn{background:var(--purple);color:#fff}
+  .cam-fallback .fbb.gal-btn{background:#23232c;color:#fff}
+
+  /* Crop modal */
+  .crop{position:fixed;inset:0;background:#0d0d12;z-index:40;display:none;flex-direction:column}
+  .crop.show{display:flex}
+  .crop-top{padding:calc(var(--safe-t) + 12px) 16px 10px;color:#fff;text-align:center;font-size:14px;font-weight:600}
+  .crop-stage{flex:1;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  #cropWrap{position:relative;touch-action:none}
+  #cropCanvas{display:block;border-radius:6px}
+  .crop-mask{position:absolute;inset:0;pointer-events:none}
+  .cropbox{position:absolute;border:2px solid #fff;box-shadow:0 0 0 9999px rgba(0,0,0,.55);border-radius:4px;touch-action:none}
+  .handle{position:absolute;width:38px;height:38px;display:flex;align-items:center;justify-content:center}
+  .handle::after{content:"";width:16px;height:16px;border:3px solid #fff;background:transparent}
+  .handle.tl{top:-19px;left:-19px} .handle.tl::after{border-right:0;border-bottom:0;border-radius:4px 0 0 0}
+  .handle.tr{top:-19px;right:-19px} .handle.tr::after{border-left:0;border-bottom:0;border-radius:0 4px 0 0}
+  .handle.bl{bottom:-19px;left:-19px} .handle.bl::after{border-right:0;border-top:0;border-radius:0 0 0 4px}
+  .handle.br{bottom:-19px;right:-19px} .handle.br::after{border-left:0;border-top:0;border-radius:0 0 4px 0}
+  .crop-bottom{padding:14px 16px calc(16px + var(--safe-b));display:flex;gap:12px;background:#0d0d12}
+  .crop-bottom .btn{flex:1}
+  .crop-bottom .btn-ghost{background:#23232c;color:#fff;border:0}
+  .crop-bottom .btn-green{background:var(--green)}
+
+  /* Image viewer */
+  .viewer{position:fixed;inset:0;background:rgba(8,8,12,.94);z-index:50;display:none;flex-direction:column}
+  .viewer.show{display:flex}
+  .viewer .v-img{flex:1;display:flex;align-items:center;justify-content:center;padding:18px}
+  .viewer img{max-width:100%;max-height:100%;border-radius:10px;background:#fff}
+  .viewer .v-bar{padding:14px 16px calc(16px + var(--safe-b));display:flex;gap:12px}
+  .viewer .v-bar .btn{flex:1}
+  .viewer .v-bar .btn-ghost{background:#23232c;color:#fff;border:0}
+
+  /* Toast */
+  #toast{position:fixed;left:50%;bottom:calc(86px + var(--safe-b));transform:translateX(-50%) translateY(20px);
+    background:#1b1b24;color:#fff;padding:11px 18px;border-radius:13px;font-size:14px;font-weight:600;
+    z-index:60;opacity:0;pointer-events:none;transition:.25s;max-width:88%;text-align:center}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+  .hint{font-size:12.5px;color:var(--muted);line-height:1.5;margin:2px 2px 14px}
+  .del{color:var(--pink)!important;border-color:#f3d6e0!important}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1><span class="dot"></span>Табак</h1>
+    <div class="sub" id="hsub">Учёт по себестоимости + Честный знак</div>
+  </header>
+  <main id="view"></main>
+  <nav>
+    <button data-tab="take" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M12 5v14" stroke-linecap="round"/></svg>
+      Взять
+    </button>
+    <button data-tab="month">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="4" y="5" width="16" height="16" rx="2"/><path d="M8 3v4M16 3v4M4 10h16" stroke-linecap="round"/></svg>
+      Месяц
+    </button>
+    <button data-tab="catalog">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke-linecap="round"/></svg>
+      Каталог
+    </button>
+  </nav>
+</div>
+
+<!-- Entry sheet -->
+<div class="scrim" id="sheetScrim">
+  <div class="sheet" id="sheet"></div>
+</div>
+
+<!-- Live camera -->
+<div class="cam" id="cam">
+  <div class="cam-top">
+    <span>Наведи на Честный знак и сними</span>
+    <button class="cam-torch" id="camTorch" style="display:none" aria-label="Фонарик">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" stroke-linejoin="round"/></svg>
+    </button>
+  </div>
+  <div class="cam-stage">
+    <video id="camVideo" playsinline autoplay muted></video>
+    <div class="cam-guide"></div>
+    <div class="cam-fallback" id="camFallback">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3l18 18M9 5h6l1.5 2H20a1 1 0 011 1v9.5M4 7h1l.6-1M5 11v6a1 1 0 001 1h11" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <p>Не вышло включить камеру внутри приложения. Сними камерой телефона или выбери готовое фото.</p>
+      <button class="fbb cam-btn" id="fbCamera">Снять камерой телефона</button>
+      <button class="fbb gal-btn" id="fbGallery">Выбрать из галереи</button>
+    </div>
+  </div>
+  <div class="cam-bottom">
+    <button class="cam-side" id="camGallery">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M5 18l5-5 4 3 2-2 3 4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Галерея
+    </button>
+    <button class="shutter" id="camShot" aria-label="Снять"></button>
+    <button class="cam-side" id="camClose">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+      Отмена
+    </button>
+  </div>
+</div>
+
+<!-- Crop modal -->
+<div class="crop" id="crop">
+  <div class="crop-top">Подвинь рамку на Честный знак</div>
+  <div class="crop-stage">
+    <div id="cropWrap">
+      <canvas id="cropCanvas"></canvas>
+      <div class="cropbox" id="cropBox">
+        <div class="handle tl" data-h="tl"></div>
+        <div class="handle tr" data-h="tr"></div>
+        <div class="handle bl" data-h="bl"></div>
+        <div class="handle br" data-h="br"></div>
+      </div>
+    </div>
+  </div>
+  <div class="crop-bottom">
+    <button class="btn btn-ghost" id="cropCancel">Отмена</button>
+    <button class="btn btn-green" id="cropDone">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Готово
+    </button>
+  </div>
+</div>
+
+<!-- Image viewer -->
+<div class="viewer" id="viewer">
+  <div class="v-img"><img id="viewerImg" alt=""></div>
+  <div class="v-bar">
+    <button class="btn btn-ghost" id="viewerClose">Закрыть</button>
+    <button class="btn btn-green" id="viewerShare">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4m0 0L8 8m4-4l4 4M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Отправить
+    </button>
+  </div>
+</div>
+
+<input type="file" id="filePick" accept="image/*" hidden>
+<div id="toast"></div>
+
+<script>
+"use strict";
+/* ============ ХРАНИЛИЩЕ ============ */
+const KEY="tabakapp";
+const def={items:[],entries:[],seeded:false};
+let db=load();
+function load(){try{return Object.assign({},def,JSON.parse(localStorage.getItem(KEY)||"{}"))}catch(e){return {...def}}}
+function save(){localStorage.setItem(KEY,JSON.stringify(db))}
+function uid(){return Date.now().toString(36)+Math.random().toString(36).slice(2,7)}
+
+/* первый запуск — примеры табаков (можно удалить/изменить) */
+if(!db.seeded){
+  db.items=[
+    {id:uid(),name:"Darkside",price:330},
+    {id:uid(),name:"Black Burn",price:300},
+    {id:uid(),name:"Starline",price:250},
+  ];
+  db.seeded=true; save();
+}
+
+/* ===== Картинки знаков — IndexedDB (большой объём) ===== */
+let _idb=null;
+function idb(){
+  if(_idb) return _idb;
+  _idb=new Promise((res,rej)=>{
+    const r=indexedDB.open("tabakImg",1);
+    r.onupgradeneeded=()=>r.result.createObjectStore("img");
+    r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error);
+  });
+  return _idb;
+}
+async function imgPut(id,dataURL){const d=await idb();return new Promise((res,rej)=>{const t=d.transaction("img","readwrite");t.objectStore("img").put(dataURL,id);t.oncomplete=res;t.onerror=()=>rej(t.error)})}
+async function imgGet(id){const d=await idb();return new Promise((res)=>{const t=d.transaction("img","readonly");const q=t.objectStore("img").get(id);q.onsuccess=()=>res(q.result||null);q.onerror=()=>res(null)})}
+async function imgDel(id){const d=await idb();return new Promise((res)=>{const t=d.transaction("img","readwrite");t.objectStore("img").delete(id);t.oncomplete=res;t.onerror=res})}
+
+/* ============ УТИЛИТЫ ============ */
+const $=s=>document.querySelector(s);
+const MONTHS=["Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"];
+const money=n=>Math.round(n).toLocaleString("ru-RU")+" ₽";
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("show");clearTimeout(el._t);el._t=setTimeout(()=>el.classList.remove("show"),1900)}
+function esc(s){return (s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+function ym(ts){const d=new Date(ts);return d.getFullYear()*12+d.getMonth()}
+function fmtDay(ts){const d=new Date(ts);return d.getDate()+" "+MONTHS[d.getMonth()].toLowerCase().slice(0,3)}
+
+/* ============ НАВИГАЦИЯ ============ */
+let tab="take";
+let curYM=(()=>{const d=new Date();return d.getFullYear()*12+d.getMonth()})();
+document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{
+  tab=b.dataset.tab;
+  document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("on",x===b));
+  render();
+});
+function render(){({take:renderTake,month:renderMonth,catalog:renderCatalog}[tab])()}
+
+/* ============ ВКЛАДКА: ВЗЯТЬ ============ */
+function renderTake(){
+  $("#hsub").textContent="Тапни табак — отметь что взял";
+  const v=$("#view");
+  if(!db.items.length){
+    v.innerHTML=`<div class="card empty">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01" stroke-linecap="round"/></svg>
+      Сначала добавь свои табаки во вкладке «Каталог»</div>`;
+    return;
+  }
+  v.innerHTML=`<div class="sec-title">Что взял</div>`+
+    db.items.map(it=>`
+    <div class="card item-card" data-take="${it.id}">
+      <div class="item-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2C9 6 9 9 12 12c3-3 3-6 0-10z" stroke-linejoin="round"/><path d="M5 13c0 5 3 9 7 9s7-4 7-9c-3 2-5 2-7 0-2 2-4 2-7 0z" stroke-linejoin="round"/></svg></div>
+      <div class="item-main">
+        <div class="item-name">${esc(it.name)}</div>
+        <div class="item-sub price">${money(it.price)} / пачка</div>
+      </div>
+      <button class="item-add" data-take="${it.id}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M12 5v14" stroke-linecap="round"/></svg>
+      </button>
+    </div>`).join("");
+  v.querySelectorAll("[data-take]").forEach(el=>el.onclick=()=>openEntrySheet(el.dataset.take));
+}
+
+/* ====== ШТОРКА: новая запись ====== */
+let pendingImg=null; // dataURL снятого знака
+function openEntrySheet(itemId){
+  const it=db.items.find(x=>x.id===itemId); if(!it) return;
+  pendingImg=null;
+  drawSheet(it);
+  $("#sheetScrim").classList.add("show");
+}
+function drawSheet(it){
+  $("#sheet").innerHTML=`
+    <h2>${esc(it.name)}</h2>
+    <div class="price-tag price">${money(it.price)}</div>
+    <div class="znak-slot" id="znakSlot">
+      ${pendingImg
+        ? `<img src="${pendingImg}"><div class="retake"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 4v6h6M20 20v-6h-6" stroke-linecap="round"/><path d="M5 13a7 7 0 0011-5M19 11a7 7 0 01-11 5" stroke-linecap="round"/></svg>Переснять</div>`
+        : `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="3" y="6" width="18" height="14" rx="2"/><path d="M8 6l1.5-2h5L16 6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.5"/></svg>
+           Снять Честный знак с пачки`}
+    </div>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" id="cancelEntry">Отмена</button>
+      <button class="btn btn-green" id="addEntry">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12l5 5L20 7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Добавить
+      </button>
+    </div>`;
+  $("#znakSlot").onclick=()=>capture(url=>{pendingImg=url;drawSheet(it)});
+  $("#cancelEntry").onclick=closeSheet;
+  $("#addEntry").onclick=()=>saveEntry(it);
+}
+function closeSheet(){$("#sheetScrim").classList.remove("show");pendingImg=null}
+$("#sheetScrim").onclick=e=>{if(e.target===$("#sheetScrim"))closeSheet()};
+
+async function saveEntry(it){
+  const id=uid();
+  if(pendingImg){await imgPut(id,pendingImg)}
+  db.entries.push({id,itemId:it.id,name:it.name,price:it.price,ts:Date.now(),img:!!pendingImg});
+  save(); closeSheet();
+  toast(pendingImg?"Добавлено ✓":"Добавлено (без знака)");
+}
+
+/* ============ ВКЛАДКА: МЕСЯЦ ============ */
+async function renderMonth(){
+  $("#hsub").textContent="Сумма за месяц и Честные знаки";
+  const v=$("#view");
+  const list=db.entries.filter(e=>ym(e.ts)===curYM).sort((a,b)=>b.ts-a.ts);
+  const total=list.reduce((s,e)=>s+e.price,0);
+  const yy=Math.floor(curYM/12), mm=curYM%12;
+  v.innerHTML=`
+    <div class="monthbar">
+      <button id="pm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M15 6l-6 6 6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+      <div class="m">${MONTHS[mm]} ${yy}</div>
+      <button id="nm"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9 6l6 6-6 6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
+    </div>
+    <div class="card total">
+      <div class="lbl">Итого за месяц</div>
+      <div class="big price">${money(total)}</div>
+      <div class="cnt">${list.length} ${plural(list.length,"пачка","пачки","пачек")}</div>
+    </div>
+    <button class="btn btn-primary" id="shareMonth" ${list.length?"":"disabled"} style="margin-bottom:16px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 16V4m0 0L8 8m4-4l4 4M5 13v5a2 2 0 002 2h10a2 2 0 002-2v-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      Отправить владельцу
+    </button>
+    <div class="sec-title">Записи</div>
+    <div class="card" id="entries">${list.length?"":`<div class="empty">В этом месяце пусто</div>`}</div>`;
+  $("#pm").onclick=()=>{curYM--;renderMonth()};
+  $("#nm").onclick=()=>{curYM++;renderMonth()};
+  $("#shareMonth").onclick=()=>shareMonth(list,MONTHS[mm]+" "+yy);
+
+  const box=$("#entries");
+  for(const e of list){
+    const row=document.createElement("div");
+    row.className="entry";
+    row.innerHTML=`
+      ${e.img
+        ? `<img class="thumb" data-view="${e.id}" alt="">`
+        : `<div class="thumb miss" title="нет знака"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 9v4m0 4h.01M10.3 4.3l-8 14A1.5 1.5 0 003.6 21h16.8a1.5 1.5 0 001.3-2.3l-8-14a1.5 1.5 0 00-2.6 0z" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`}
+      <div class="e-main">
+        <div class="e-name">${esc(e.name)}</div>
+        <div class="e-sub">${fmtDay(e.ts)}${e.img?"":" · нет знака"}</div>
+      </div>
+      <div class="e-price price">${money(e.price)}</div>
+      <button class="icon-btn" data-del="${e.id}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 7h14M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>`;
+    box.appendChild(row);
+    if(e.img){const t=row.querySelector("[data-view]");imgGet(e.id).then(u=>{if(u)t.src=u});t.onclick=()=>openViewer(e.id,e.name)}
+    row.querySelector("[data-del]").onclick=()=>delEntry(e.id);
+  }
+}
+function plural(n,a,b,c){n=Math.abs(n)%100;const n1=n%10;if(n>10&&n<20)return c;if(n1>1&&n1<5)return b;if(n1===1)return a;return c}
+
+async function delEntry(id){
+  if(!confirm("Удалить запись?"))return;
+  db.entries=db.entries.filter(e=>e.id!==id); save();
+  await imgDel(id); renderMonth(); toast("Удалено");
+}
+
+/* ====== Поделиться месяцем ====== */
+async function shareMonth(list,label){
+  const lines=list.map((e,i)=>`${i+1}. ${e.name} — ${money(e.price)}`);
+  const total=list.reduce((s,e)=>s+e.price,0);
+  const text=`Честные знаки за ${label}\n\n${lines.join("\n")}\n\nИтого: ${money(total)}`;
+  const files=[];
+  for(const e of list){
+    if(!e.img)continue;
+    const u=await imgGet(e.id); if(!u)continue;
+    files.push(dataURLtoFile(u,`znak_${e.name.replace(/\s+/g,"_")}_${fmtDay(e.ts)}.jpg`));
+  }
+  try{
+    if(files.length && navigator.canShare && navigator.canShare({files})){
+      await navigator.share({files,text,title:"Честные знаки"});
+    }else if(navigator.share){
+      await navigator.share({text,title:"Честные знаки"});
+      if(files.length)toast("Знаки отправь по одному из списка");
+    }else{
+      await navigator.clipboard.writeText(text); toast("Список скопирован");
+    }
+  }catch(err){if(err&&err.name!=="AbortError")toast("Не удалось отправить")}
+}
+function dataURLtoFile(url,name){
+  const [meta,b64]=url.split(",");const mime=(meta.match(/:(.*?);/)||[])[1]||"image/jpeg";
+  const bin=atob(b64);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);
+  return new File([arr],name,{type:mime});
+}
+
+/* ====== Просмотр одного знака ====== */
+let viewerId=null,viewerName="";
+async function openViewer(id,name){
+  const u=await imgGet(id); if(!u)return;
+  viewerId=id;viewerName=name; $("#viewerImg").src=u; $("#viewer").classList.add("show");
+}
+$("#viewerClose").onclick=()=>$("#viewer").classList.remove("show");
+$("#viewerShare").onclick=async()=>{
+  const u=await imgGet(viewerId); if(!u)return;
+  const f=dataURLtoFile(u,`znak_${viewerName.replace(/\s+/g,"_")}.jpg`);
+  try{
+    if(navigator.canShare&&navigator.canShare({files:[f]}))await navigator.share({files:[f],title:"Честный знак"});
+    else toast("Поделиться недоступно — сохрани картинку");
+  }catch(err){if(err&&err.name!=="AbortError")toast("Не удалось")}
+};
+
+/* ============ ВКЛАДКА: КАТАЛОГ ============ */
+function renderCatalog(){
+  $("#hsub").textContent="Твои табаки и цены по себестоимости";
+  const v=$("#view");
+  v.innerHTML=`
+    <div class="card" style="padding:14px;margin-bottom:14px">
+      <div class="row2" style="margin-bottom:10px">
+        <input class="field name" id="nName" placeholder="Название табака" autocomplete="off">
+        <input class="field pr" id="nPrice" placeholder="Цена" inputmode="numeric">
+      </div>
+      <button class="btn btn-primary" id="addItem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 12h14M12 5v14" stroke-linecap="round"/></svg>
+        Добавить табак
+      </button>
+    </div>
+    <div class="hint">Цена — твоя себестоимость за пачку. Можешь нажать на название или цену чтобы изменить.</div>
+    <div class="sec-title">Список</div>
+    <div class="card" id="cat">${db.items.length?"":`<div class="empty">Пока пусто</div>`}</div>`;
+  $("#addItem").onclick=addItem;
+  $("#nName").addEventListener("keydown",e=>{if(e.key==="Enter")$("#nPrice").focus()});
+  $("#nPrice").addEventListener("keydown",e=>{if(e.key==="Enter")addItem()});
+
+  const cat=$("#cat");
+  db.items.forEach(it=>{
+    const row=document.createElement("div");
+    row.className="entry";
+    row.innerHTML=`
+      <div class="item-ic" style="width:38px;height:38px"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2C9 6 9 9 12 12c3-3 3-6 0-10z" stroke-linejoin="round"/><path d="M5 13c0 5 3 9 7 9s7-4 7-9c-3 2-5 2-7 0-2 2-4 2-7 0z" stroke-linejoin="round"/></svg></div>
+      <div class="e-main"><div class="e-name" data-edit="name">${esc(it.name)}</div>
+        <div class="e-sub price" data-edit="price">${money(it.price)} / пачка</div></div>
+      <button class="icon-btn del" data-del="${it.id}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M5 7h14M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </button>`;
+    cat.appendChild(row);
+    row.querySelector('[data-edit="name"]').onclick=()=>editItem(it.id,"name");
+    row.querySelector('[data-edit="price"]').onclick=()=>editItem(it.id,"price");
+    row.querySelector("[data-del]").onclick=()=>delItem(it.id);
+  });
+}
+function addItem(){
+  const name=$("#nName").value.trim();
+  const price=parseFloat(($("#nPrice").value||"").replace(",","."));
+  if(!name)return toast("Введи название");
+  if(!(price>=0)||isNaN(price))return toast("Введи цену");
+  db.items.push({id:uid(),name,price}); save(); renderCatalog(); toast("Табак добавлен");
+}
+function editItem(id,field){
+  const it=db.items.find(x=>x.id===id); if(!it)return;
+  if(field==="name"){const v=prompt("Название табака:",it.name);if(v&&v.trim()){it.name=v.trim();save();renderCatalog()}}
+  else{const v=prompt("Цена за пачку (₽):",it.price);if(v!==null){const p=parseFloat(v.replace(",","."));if(p>=0&&!isNaN(p)){it.price=p;save();renderCatalog()}}}
+}
+function delItem(id){
+  if(!confirm("Удалить табак из каталога?\n(Записи за месяц останутся)"))return;
+  db.items=db.items.filter(x=>x.id!==id); save(); renderCatalog(); toast("Удалено");
+}
+
+/* ============ КАМЕРА + КРОП ============ */
+const filePick=$("#filePick");
+let cropResolve=null;
+
+/* --- живая камера --- */
+const camEl=$("#cam"), camVideo=$("#camVideo");
+let camStream=null, torchTrack=null, torchOn=false;
+
+function capture(cb){ cropResolve=cb; startCam(); }
+function openFilePicker(preferCamera){
+  if(preferCamera) filePick.setAttribute("capture","environment");
+  else filePick.removeAttribute("capture");
+  filePick.value=""; filePick.click();
+}
+function hideCam(){ stopCam(); camEl.classList.remove("show","fb"); }
+
+async function startCam(){
+  camEl.classList.remove("fb");
+  camEl.classList.add("show"); // показываем экран сразу
+  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia){ camEl.classList.add("fb"); return; }
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1920}},
+      audio:false
+    });
+    camVideo.srcObject=camStream;
+    await camVideo.play();
+    setupTorch();
+  }catch(e){
+    stopCam();
+    camEl.classList.add("fb"); // нет доступа — показываем кнопки-запасы
+  }
+}
+function stopCam(){
+  if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null}
+  torchTrack=null; torchOn=false; $("#camTorch").classList.remove("on");
+}
+function setupTorch(){
+  const btn=$("#camTorch"); btn.style.display="none";
+  try{
+    const tr=camStream.getVideoTracks()[0];
+    const caps=tr.getCapabilities?tr.getCapabilities():{};
+    if(caps&&caps.torch){ torchTrack=tr; btn.style.display="flex"; }
+  }catch(e){}
+}
+$("#camTorch").onclick=async()=>{
+  if(!torchTrack)return;
+  torchOn=!torchOn;
+  try{ await torchTrack.applyConstraints({advanced:[{torch:torchOn}]}); $("#camTorch").classList.toggle("on",torchOn); }
+  catch(e){ toast("Фонарик недоступен"); }
+};
+$("#camClose").onclick=()=>{ hideCam(); cropResolve=null; };
+$("#camGallery").onclick=()=>{ hideCam(); openFilePicker(false); };
+$("#fbCamera").onclick=()=>{ camEl.classList.remove("show","fb"); openFilePicker(true); };
+$("#fbGallery").onclick=()=>{ camEl.classList.remove("show","fb"); openFilePicker(false); };
+$("#camShot").onclick=()=>{
+  const v=camVideo;
+  if(!v.videoWidth){ toast("Камера ещё грузится…"); return; }
+  const c=document.createElement("canvas");
+  c.width=v.videoWidth; c.height=v.videoHeight;
+  c.getContext("2d").drawImage(v,0,0);
+  stopCam(); camEl.classList.remove("show","fb");
+  openCrop(c); // кадр-канвас идёт в обрезку как картинка
+};
+
+/* --- выбор из галереи / системная камера (запасной путь) --- */
+filePick.onchange=async()=>{
+  const f=filePick.files&&filePick.files[0]; if(!f)return;
+  let bmp;
+  try{bmp=await createImageBitmap(f,{imageOrientation:"from-image"})}
+  catch(e){bmp=await createImageBitmap(f)}
+  openCrop(bmp);
+};
+
+/* --- состояние кропа --- */
+let cbmp=null, dScale=1, box={x:0,y:0,s:0};
+const cropEl=$("#crop"), canvas=$("#cropCanvas"), boxEl=$("#cropBox"), wrap=$("#cropWrap");
+
+function openCrop(bmp){
+  cbmp=bmp;
+  cropEl.classList.add("show"); // показать заранее, чтобы получить реальные размеры
+  const stage=document.querySelector(".crop-stage");
+  const maxW=stage.clientWidth-24, maxH=stage.clientHeight-24;
+  dScale=Math.min(maxW/bmp.width, maxH/bmp.height, 1);
+  const dw=Math.round(bmp.width*dScale), dh=Math.round(bmp.height*dScale);
+  canvas.width=dw; canvas.height=dh;
+  canvas.style.width=dw+"px"; canvas.style.height=dh+"px";
+  const ctx=canvas.getContext("2d"); ctx.drawImage(bmp,0,0,dw,dh);
+  // стартовая рамка — квадрат по центру, 62% от меньшей стороны
+  const s=Math.round(Math.min(dw,dh)*0.62);
+  box={x:Math.round((dw-s)/2), y:Math.round((dh-s)/2), s};
+  applyBox();
+}
+function applyBox(){
+  boxEl.style.left=box.x+"px"; boxEl.style.top=box.y+"px";
+  boxEl.style.width=box.s+"px"; boxEl.style.height=box.s+"px";
+}
+function clamp(){
+  box.s=Math.max(50,Math.min(box.s,canvas.width,canvas.height));
+  box.x=Math.max(0,Math.min(box.x,canvas.width-box.s));
+  box.y=Math.max(0,Math.min(box.y,canvas.height-box.s));
+}
+
+/* перетаскивание тела рамки */
+let drag=null;
+boxEl.addEventListener("pointerdown",e=>{
+  if(e.target.classList.contains("handle"))return;
+  drag={mode:"move",sx:e.clientX,sy:e.clientY,bx:box.x,by:box.y};
+  boxEl.setPointerCapture(e.pointerId);
+});
+/* ресайз за угол */
+boxEl.querySelectorAll(".handle").forEach(h=>{
+  h.addEventListener("pointerdown",e=>{
+    e.stopPropagation();
+    drag={mode:"size",corner:h.dataset.h,sx:e.clientX,sy:e.clientY,b:{...box}};
+    h.setPointerCapture(e.pointerId);
+  });
+});
+window.addEventListener("pointermove",e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.sx, dy=e.clientY-drag.sy;
+  if(drag.mode==="move"){
+    box.x=drag.bx+dx; box.y=drag.by+dy; clamp(); applyBox();
+  }else{
+    const b=drag.b; let d;
+    // фиксируем противоположный угол, держим квадрат
+    if(drag.corner==="br"){d=Math.max(dx,dy); box.s=b.s+d; box.x=b.x; box.y=b.y;}
+    if(drag.corner==="tl"){d=Math.max(-dx,-dy); box.s=b.s+d; box.x=b.x-d; box.y=b.y-d;}
+    if(drag.corner==="tr"){d=Math.max(dx,-dy); box.s=b.s+d; box.x=b.x; box.y=b.y-d;}
+    if(drag.corner==="bl"){d=Math.max(-dx,dy); box.s=b.s+d; box.x=b.x-d; box.y=b.y;}
+    clamp(); applyBox();
+  }
+});
+window.addEventListener("pointerup",()=>{drag=null});
+
+$("#cropCancel").onclick=()=>{cropEl.classList.remove("show");cbmp=null};
+$("#cropDone").onclick=()=>{
+  const OUT=820;
+  const sx=box.x/dScale, sy=box.y/dScale, ss=box.s/dScale;
+  const c=document.createElement("canvas"); c.width=OUT; c.height=OUT;
+  const ctx=c.getContext("2d");
+  ctx.fillStyle="#fff"; ctx.fillRect(0,0,OUT,OUT);
+  ctx.drawImage(cbmp,sx,sy,ss,ss,0,0,OUT,OUT);
+  enhance(ctx,OUT); // лёгкая чистка контраста
+  const url=c.toDataURL("image/jpeg",0.92);
+  cropEl.classList.remove("show"); cbmp=null;
+  if(cropResolve){cropResolve(url);cropResolve=null}
+};
+/* мягкий контраст, чтобы код читался ровнее */
+function enhance(ctx,size){
+  try{
+    const im=ctx.getImageData(0,0,size,size), d=im.data, k=1.18, t=128*(1-k);
+    for(let i=0;i<d.length;i+=4){
+      d[i]=d[i]*k+t; d[i+1]=d[i+1]*k+t; d[i+2]=d[i+2]*k+t;
+    }
+    ctx.putImageData(im,0,0);
+  }catch(e){}
+}
+
+/* ============ PWA: манифест + иконка ============ */
+function buildIcon(size){
+  const c=document.createElement("canvas"); c.width=c.height=size;
+  const x=c.getContext("2d"), r=size*0.22;
+  const g=x.createLinearGradient(0,0,size,size); g.addColorStop(0,"#6a5fe0"); g.addColorStop(1,"#534ab7");
+  x.fillStyle=g; rr(x,0,0,size,size,r); x.fill();
+  // мини QR-мотив
+  x.fillStyle="#fff"; const u=size/12, o=size*0.255, n=5, gap=u*1.35;
+  const pat=[[1,1,1,1,1],[1,0,0,0,1],[1,0,1,0,1],[1,0,0,0,1],[1,1,1,1,1]];
+  const draw=(ox,oy)=>{for(let i=0;i<n;i++)for(let j=0;j<n;j++)if(pat[i][j]){x.fillRect(ox+j*gap,oy+i*gap,gap*0.92,gap*0.92)}};
+  draw(o,o); 
+  // несколько точек данных
+  const dots=[[8,2],[9,3],[8,4],[10,2],[2,8],[3,9],[4,8],[2,10],[8,8],[9,9],[10,8],[8,10],[10,10]];
+  dots.forEach(([cx,cy])=>x.fillRect(cx*u,cy*u,u*0.92,u*0.92));
+  return c.toDataURL("image/png");
+}
+function rr(c,x,y,w,h,r){c.beginPath();c.moveTo(x+r,y);c.arcTo(x+w,y,x+w,y+h,r);c.arcTo(x+w,y+h,x,y+h,r);c.arcTo(x,y+h,x,y,r);c.arcTo(x,y,x+w,y,r);c.closePath()}
+(function setupPWA(){
+  try{
+    const i512=buildIcon(512), i192=buildIcon(192);
+    const link=document.createElement("link"); link.rel="apple-touch-icon"; link.href=i512;
+    document.head.appendChild(link);
+    const man={name:"Табак — учёт",short_name:"Табак",start_url:".",scope:".",display:"standalone",
+      background_color:"#f4f4f7",theme_color:"#534ab7",orientation:"portrait",
+      icons:[{src:i192,sizes:"192x192",type:"image/png",purpose:"any"},
+             {src:i512,sizes:"512x512",type:"image/png",purpose:"any maskable"}]};
+    const blob=new Blob([JSON.stringify(man)],{type:"application/json"});
+    const ml=document.createElement("link"); ml.rel="manifest"; ml.href=URL.createObjectURL(blob);
+    document.head.appendChild(ml);
+  }catch(e){}
+})();
+
+render();
+</script>
+</body>
+</html>
